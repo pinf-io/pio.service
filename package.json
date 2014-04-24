@@ -1,0 +1,10 @@
+{
+	"name": "pio.service",
+	"version": "0.0.0",
+    "pm": "npm",
+	"config": {
+	  "pio.deploy.converter": {
+	      "name": "nodejs-lib"
+	  }
+	}
+}
