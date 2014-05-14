@@ -140,6 +140,7 @@ exports.ensure = function(pio, state) {
                 serviceDeploymentDescriptor["config.plugin"] = {};
                 serviceDeploymentDescriptor["config.plugin~raw"] = {};
 
+                // TODO: Pass raw along in abstracted object.
                 for (var serviceId in state["pio.services"].services) {
                     if (
                         state["pio.services"].services[serviceId].descriptor["config.plugin"] &&
