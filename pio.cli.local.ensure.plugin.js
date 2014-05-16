@@ -148,6 +148,13 @@ exports.ensure = function(pio, state) {
                     ) {
                         serviceDeploymentDescriptor["config.plugin"][serviceId] = state["pio.services"].services[serviceId].descriptor["config.plugin"][serviceDescriptor.id];
                         serviceDeploymentDescriptor["config.plugin~raw"][serviceId] = state["pio.services"].services[serviceId].descriptor._raw["config.plugin"][serviceDescriptor.id];
+                    } else
+                    if (
+                        state["pio.services"].services[serviceId].descriptor["config"] &&
+                        state["pio.services"].services[serviceId].descriptor["config"][serviceDescriptor.id]
+                    ) {
+                        serviceDeploymentDescriptor["config.plugin"][serviceId] = state["pio.services"].services[serviceId].descriptor["config"][serviceDescriptor.id];
+                        serviceDeploymentDescriptor["config.plugin~raw"][serviceId] = state["pio.services"].services[serviceId].descriptor._raw["config"][serviceDescriptor.id];
                     }
                 }
                 // TODO: Use pinf-config conventions to resolve these.
