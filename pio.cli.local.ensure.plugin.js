@@ -147,7 +147,9 @@ exports.ensure = function(pio, state) {
                         state["pio.services"].services[serviceId].descriptor["config.plugin"][serviceDescriptor.id]
                     ) {
                         serviceDeploymentDescriptor["config.plugin"][serviceId] = state["pio.services"].services[serviceId].descriptor["config.plugin"][serviceDescriptor.id];
-                        serviceDeploymentDescriptor["config.plugin~raw"][serviceId] = state["pio.services"].services[serviceId].descriptor._raw["config.plugin"][serviceDescriptor.id];
+                        if (state["pio.services"].services[serviceId].descriptor._raw["config.plugin"]) {
+                            serviceDeploymentDescriptor["config.plugin~raw"][serviceId] = state["pio.services"].services[serviceId].descriptor._raw["config.plugin"][serviceDescriptor.id];
+                        }
                     } else
                     if (
                         state["pio.services"].services[serviceId].descriptor["config"] &&
