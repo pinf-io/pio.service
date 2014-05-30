@@ -161,6 +161,7 @@ exports.ensure = function(pio, state) {
                 }
                 // TODO: Use pinf-config conventions to resolve these.
                 var pluginConfigStr = JSON.stringify(serviceDeploymentDescriptor["config.plugin"]);
+                pluginConfigStr = pluginConfigStr.replace(/\{\{config\.pio\.domain\}\}/g, state["pio"].domain);
                 pluginConfigStr = pluginConfigStr.replace(/\{\{config\.pio\.hostname\}\}/g, state["pio"].hostname);
                 pluginConfigStr = pluginConfigStr.replace(/\{\{config\['pio.vm'\]\.ip\}\}/g, state["pio.vm"].ip);
                 serviceDeploymentDescriptor["config.plugin"] = JSON.parse(pluginConfigStr);
