@@ -167,20 +167,86 @@ exports.ensure = function(pio, state) {
                 serviceDeploymentDescriptor["config.plugin"] = JSON.parse(pluginConfigStr);
 
                 function generateFileInfo() {
-                    var walker = new pio.API.FSWALKER.Walker(serviceDescriptor.path);
-                    var opts = {};
-                    opts.returnIgnoredFiles = true;
-                    opts.includeDependencies = false;
-                    opts.respectDistignore = false;
-                    opts.respectNestedIgnore = true;
-                    opts.excludeMtime = true;
-                    return pio.API.Q.nbind(walker.walk, walker)(opts).then(function(fileinfo) {
-                        var shasum = CRYPTO.createHash("sha1");
-                        shasum.update(JSON.stringify(fileinfo[0]));
-                        return {
-                            checksum: shasum.digest("hex"),
-                            fileinfo: fileinfo
-                        };
+
+                    // TODO: Resolve these dirs using `pinf-it-*`.
+
+                    var aspectDirectories = {
+                        scripts: "scripts",
+                        source: "source"
+                    };
+                    if (
+                        serviceDescriptor.descriptor &&
+                        serviceDescriptor.descriptor.config &&
+                        serviceDescriptor.descriptor.config["pio.deploy.converter"]
+                    ) {
+                        if (serviceDescriptor.descriptor.config["pio.deploy.converter"].name === "nodejs-lib") {
+                            aspectDirectories.scripts = null;
+                            aspectDirectories.source = ".";
+                        } else
+                        if (serviceDescriptor.descriptor.config["pio.deploy.converter"].name === "nodejs-server") {
+                            aspectDirectories.scripts = "scripts.pio";
+                            aspectDirectories.source = ".";
+                        } else
+                        if (serviceDescriptor.descriptor.config["pio.deploy.converter"].name === "scripts-only") {
+                            aspectDirectories.scripts = ".";
+                            aspectDirectories.source = ".";
+                        } else {
+                            aspectDirectories.scripts = "scripts";
+                            aspectDirectories.source = "source";
+                        }
+                        if (serviceDescriptor.descriptor.config["pio.deploy.converter"].scriptsPath) {
+                            aspectDirectories.scripts = serviceDescriptor.descriptor.config["pio.deploy.converter"].scriptsPath;
+                        }
+                        if (serviceDescriptor.descriptor.config["pio.deploy.converter"].sourcePath) {
+                            aspectDirectories.source = serviceDescriptor.descriptor.config["pio.deploy.converter"].sourcePath;
+                        }
+                    }
+
+                    function getHashForAspect(aspect) {
+                        if (!aspectDirectories[aspect]) {
+                            return pio.API.Q.resolve(null);
+                        }
+
+                        var path = PATH.join(serviceDescriptor.path, aspectDirectories[aspect]);
+
+                        if (!FS.existsSync(path)) {
+                            return pio.API.Q.resolve(null);
+                        }
+
+                        // Get checksum for each aspect.
+                        var walker = new pio.API.FSWALKER.Walker(path);
+                        var opts = {};
+                        opts.returnIgnoredFiles = true;
+                        opts.includeDependencies = false;
+                        opts.respectDistignore = false;
+                        opts.respectNestedIgnore = true;
+                        opts.excludeMtime = true;
+                        return pio.API.Q.nbind(walker.walk, walker)(opts).then(function(fileinfo) {
+//console.log("fileinfo", fileinfo);
+                            var shasum = CRYPTO.createHash("sha1");
+                            shasum.update(JSON.stringify(fileinfo[0]));
+                            return {
+                                checksum: shasum.digest("hex"),
+                                fileinfo: fileinfo
+                            };
+                        });
+                    }
+
+                    return getHashForAspect("scripts").then(function(scriptsInfo) {
+                        return getHashForAspect("source").then(function(sourceInfo) {
+                            var shasum = CRYPTO.createHash("sha1");
+                            shasum.update(JSON.stringify([
+                                (scriptsInfo && scriptsInfo.checksum) || "",
+                                (sourceInfo && sourceInfo.checksum) || "",
+                            ]));
+                            return {
+                                checksum: shasum.digest("hex"),
+                                fileinfo: {
+                                    scripts: scriptsInfo,
+                                    source: sourceInfo
+                                }
+                            };
+                        });
                     });
                 }
 
