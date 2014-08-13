@@ -2,7 +2,10 @@
 	"name": "pio.service",
 	"version": "0.0.0",
     "pm": "npm",
-	"config": {
+	"dependencies": {
+    	"escape-regexp-component": "~1.0.2"
+    },
+ 	"config": {
 	  "pio.deploy.converter": {
 	      "name": "nodejs-lib"
 	  }

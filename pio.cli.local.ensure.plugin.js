@@ -3,6 +3,7 @@ const ASSERT = require("assert");
 const PATH = require("path");
 const FS = require("fs");
 const CRYPTO = require("crypto");
+const ESCAPE_REGEXP_COMPONENT = require("escape-regexp-component");
 
 
 exports.ensure = function(pio, state) {
@@ -126,12 +127,19 @@ exports.ensure = function(pio, state) {
 
                 // TODO: Pass these along in a backchannel unless declared in config.
                 // TODO: Make env propagation more generic using new config module.
+                for (var name in serviceDeploymentDescriptor.env) {
+                    if (("$" + name) === serviceDeploymentDescriptor.env[name] && typeof process.env[name] === "string") {
+                        serviceDeploymentDescriptor.env[name] = process.env[name];
+                    }
+                }
+                /*
                 if (serviceDeploymentDescriptor.env.AWS_ACCESS_KEY === "$AWS_ACCESS_KEY") {
                     serviceDeploymentDescriptor.env.AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
                 }
                 if (serviceDeploymentDescriptor.env.AWS_SECRET_KEY === "$AWS_SECRET_KEY") {
                     serviceDeploymentDescriptor.env.AWS_SECRET_KEY = process.env.AWS_SECRET_KEY;
                 }
+                */
 
                 if (serviceDescriptor.descriptor && serviceDescriptor.descriptor.env) {
                     serviceDeploymentDescriptor.env = pio.API.DEEPMERGE(serviceDescriptor.descriptor.env, serviceDeploymentDescriptor.env);
@@ -168,6 +176,20 @@ exports.ensure = function(pio, state) {
                 pluginConfigStr = pluginConfigStr.replace(/\{\{config\.pio\.hostname\}\}/g, state["pio"].hostname);
                 pluginConfigStr = pluginConfigStr.replace(/\{\{config\['pio.vm'\]\.ip\}\}/g, state["pio.vm"].ip);
                 serviceDeploymentDescriptor["config.plugin"] = JSON.parse(pluginConfigStr);
+
+                var configStr = JSON.stringify(serviceDescriptor["config"] || {});
+                var re = /\{\{env\.([^\}]+)\}\}/g;
+                var m = null;
+                while (m = re.exec(configStr)) {
+                    if (typeof serviceDeploymentDescriptor.env[m[1]] === "string") {
+                        configStr = configStr.replace(new RegExp(ESCAPE_REGEXP_COMPONENT(m[0]), "g"), serviceDeploymentDescriptor.env[m[1]]);
+                    }
+                }
+                try {
+                    serviceDescriptor["config"] = JSON.parse(configStr);
+                } catch(err) {
+                    console.error("Error '" + err.message + "' parsing JSON: ", configStr);
+                }
 
                 function generateFileInfo() {
 
