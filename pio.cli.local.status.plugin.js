@@ -36,6 +36,11 @@ exports.status = function(pio, state) {
             if (!response.objects || !response.objects.status) {
                 throw new Error('Status response does not include a `<wf name="status">{...}</wf>` wildfire response!');
             }
+
+            if (state["pio.cli.local"].verbose) {
+                console.log("response", response);
+            }
+
 			return {
 				"pio.service.status": {
 					"response": response.objects.status
